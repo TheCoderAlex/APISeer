@@ -1,2 +1,4 @@
 /Datasets/cache/
 /Model/*
+/wandb/*
+APISeer_trained*
