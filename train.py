@@ -14,7 +14,7 @@ import pytorch_lightning as pl
 
 tokenizer = T5Tokenizer.from_pretrained(save_directory)
 
-prefix = "Generate APIs: "
+prefix = "generate api: "
 max_input_length = 256
 max_target_length = 128
 
@@ -107,22 +107,22 @@ class APISeer(pl.LightningModule):
 if __name__=='__main__':
     download_model()
 
-    dataset = load_dataset('csv', data_dir='Datasets')
+    dataset = load_dataset('csv', data_dir='Datasets/9-3')
 
     dataset = dataset.map(preprocess_examples, batched=True)
     dataset.set_format(type="torch", columns=['input_ids', 'attention_mask', 'labels'])
 
-    train_dataloader = DataLoader(dataset['train'], shuffle=True, batch_size=8, num_workers=31)
-    valid_dataloader = DataLoader(dataset['validation'], batch_size=4, num_workers=31)
-    test_dataloader = DataLoader(dataset['test'], batch_size=4, num_workers=31)
+    train_dataloader = DataLoader(dataset['train'], shuffle=True, batch_size=8)
+    valid_dataloader = DataLoader(dataset['validation'], batch_size=4)
+    test_dataloader = DataLoader(dataset['test'], batch_size=4)
 
     print("Finish generating datasets.")
 
 
     model = APISeer()
-    model.train()
+    torch.set_float32_matmul_precision('high')
 
-    wandb_logger = WandbLogger(name='APISeer-8-28', project='APISeer')
+    wandb_logger = WandbLogger(name='APISeer-9-3', project='APISeer')
 
     # 根据validation_loss提早结束train过程
     # 3回合loss变化范围不大即可停止
@@ -139,6 +139,7 @@ if __name__=='__main__':
     trainer = Trainer(devices=1, accelerator='gpu', logger=wandb_logger, callbacks=[early_stop_callback, lr_monitor])
     trainer.fit(model)
 
-    torch.save(model.state_dict(), 'APISeer_trained.pth')
+    save_trained = "Trained/APISeer_Trained-9-3"
+    model.model.save_pretrained(save_trained)
 
 
