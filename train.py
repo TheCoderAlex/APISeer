@@ -16,12 +16,12 @@ tokenizer = T5Tokenizer.from_pretrained(save_directory)
 
 prefix = "generate api: "
 max_input_length = 256
-max_target_length = 128
+max_target_length = 256
 
 def preprocess_examples(examples):
 
-  apis = examples['API']
-  hidden_apis = examples['Hidden API']
+  apis = examples['input']
+  hidden_apis = examples['output']
 
   inputs = [prefix + api for api in apis]
   model_inputs = tokenizer(inputs, max_length=max_input_length, padding="max_length", truncation=True)
@@ -83,8 +83,6 @@ class APISeer(pl.LightningModule):
         # 使用AdamW优化器
         optimizer = AdamW(self.parameters(), lr=self.hparams.lr)
         # 使用 learning rate scheduler
-        # Create a schedule with a learning rate that decreases linearly from the initial lr set in the optimizer to 0
-        # after a warmup period during which it increases linearly from 0 to the initial lr set in the optimizer.
         num_train_optimization_steps = self.hparams.num_train_epochs * len(train_dataloader)
         lr_scheduler = {'scheduler': get_linear_schedule_with_warmup(optimizer,
                                                     num_warmup_steps=self.hparams.warmup_steps,
@@ -107,7 +105,7 @@ class APISeer(pl.LightningModule):
 if __name__=='__main__':
     download_model()
 
-    dataset = load_dataset('csv', data_dir='Datasets/9-3')
+    dataset = load_dataset('csv', data_dir='Datasets/9-13')
 
     dataset = dataset.map(preprocess_examples, batched=True)
     dataset.set_format(type="torch", columns=['input_ids', 'attention_mask', 'labels'])
@@ -122,7 +120,7 @@ if __name__=='__main__':
     model = APISeer()
     torch.set_float32_matmul_precision('high')
 
-    wandb_logger = WandbLogger(name='APISeer-9-3', project='APISeer')
+    wandb_logger = WandbLogger(name='APISeer-9-13-base', project='APISeer')
 
     # 根据validation_loss提早结束train过程
     # 3回合loss变化范围不大即可停止
@@ -139,7 +137,7 @@ if __name__=='__main__':
     trainer = Trainer(devices=1, accelerator='gpu', logger=wandb_logger, callbacks=[early_stop_callback, lr_monitor])
     trainer.fit(model)
 
-    save_trained = "Trained/APISeer_Trained-9-3"
+    save_trained = "Trained/APISeer_Trained-9-13-base"
     model.model.save_pretrained(save_trained)
 
 
