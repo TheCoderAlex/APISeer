@@ -1,4 +1,4 @@
-/Datasets/cache/
+/Datasets/*
 /Model/*
 /wandb/*
 /APISeer/*
